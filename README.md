@@ -46,9 +46,9 @@ You should have three files, now: `lupa-pona`, `cert.pem`, and
 
     perl lupa-pona
 
-This starts the server in the foreground, for \`gemini://localhost:1965\`. If it
-aborts, see the ["Troubleshooting"](#troubleshooting) section below. If it runs, open a second
-terminal and test it:
+This starts the server in the foreground, for `gemini://localhost:1965`. If it
+aborts, see the ["Troubleshooting"](#troubleshooting) section below. If it runs, open your
+favourite Gemini client and test it, or open another terminal and test it:
 
     echo gemini://localhost \
       | openssl s_client --quiet --connect localhost:1965 2>/dev/null
