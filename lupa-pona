@@ -43,6 +43,8 @@ Perl libraries you need to install if you want to run Lupa Pona:
 
 =back
 
+=head2 Quickstart
+
 Since Lupa Pona traffic is encrypted, we need to generate a
 certificate and a key. These are both stored in PEM files. To create
 your own copies of these files (and you should!), use "make cert" if

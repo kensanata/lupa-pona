@@ -8,6 +8,7 @@ myself, for Gemini hosting. It's a wiki, not just a file server.
 **Table of Contents**
 
 - [Dependencies](#dependencies)
+- [Quickstart](#quickstart)
 - [Troubleshooting](#troubleshooting)
 - [Options](#options)
 - [Running Lupa Pona as a Daemon](#running-lupa-pona-as-a-daemon)
@@ -24,6 +25,8 @@ Perl libraries you need to install if you want to run Lupa Pona:
 - [Modern::Perl](https://metacpan.org/pod/Modern%3A%3APerl), or `libmodern-perl-perl`
 - [Net::Server](https://metacpan.org/pod/Net%3A%3AServer), or `libnet-server-perl`
 - [URI::Escape](https://metacpan.org/pod/URI%3A%3AEscape), or `liburi-escape-xs-perl`
+
+## Quickstart
 
 Since Lupa Pona traffic is encrypted, we need to generate a
 certificate and a key. These are both stored in PEM files. To create
