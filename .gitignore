@@ -1,5 +1,6 @@
 blib
 test
+*.pem
 *.tar
 *.old
 *.bak
