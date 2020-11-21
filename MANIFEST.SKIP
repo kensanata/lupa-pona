@@ -6,6 +6,7 @@ test
 blib
 \.git
 .*\.tar\.gz$
+.*\.tar$
 .*\.bak$
 .*\.old$
 .*\.pem$

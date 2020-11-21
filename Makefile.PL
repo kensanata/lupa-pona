@@ -15,6 +15,9 @@ WriteMakefile(
     'strict'   => 0,
     'warnings' => 0,
     'Mojo::IOLoop' => 0,
+    'Mojo::Log' => 0,
+    'File::Slurper' => 0,
+    'Modern::Perl' => 0,
     'URI::Escape' => 0,
   },
   META_MERGE => {

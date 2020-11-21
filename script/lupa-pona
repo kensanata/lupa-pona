@@ -36,15 +36,11 @@ Perl libraries you need to install if you want to run Lupa Pona:
 
 =over
 
-=item L<IO::Socket::INET6>, or C<libio-socket-inet6-perl>
-
-=item L<IO::Socket::SSL>, or C<libio-socket-ssl-perl>
+=item L<Mojo::Log> and L<Mojo::IOLoop>, or C<libmojolicious-perl>
 
 =item L<File::Slurper>, or C<libfile-slurper-perl>
 
 =item L<Modern::Perl>, or C<libmodern-perl-perl>
-
-=item L<Net::Server>, or C<libnet-server-perl>
 
 =item L<URI::Escape>, or C<liburi-escape-xs-perl>
 
@@ -52,26 +48,21 @@ Perl libraries you need to install if you want to run Lupa Pona:
 
 =head2 Quickstart
 
-Since Lupa Pona traffic is encrypted, we need to generate a
-certificate and a key. These are both stored in PEM files. To create
-your own copies of these files (and you should!), use "make cert" if
-you have a copy of the Makefile. If you don't, use this:
+Since Lupa Pona traffic is encrypted, we need to generate a certificate and a
+key. When you start it for the first time, it will ask you for a hostname. Use
+'localhost' if you don't know. You can also generate your own certificate, like
+this, replacing C<$hostname> with whatever you need:
 
-    openssl req -new -x509 -newkey ec \
+    openssl req -new -x509 -newkey ec -subj "/CN=$hostname" \
     -pkeyopt ec_paramgen_curve:prime256v1 \
     -days 1825 -nodes -out cert.pem -keyout key.pem
-
-Answer all the questions with "." except for the one about the Common Name.
-There, answer "localhost" while you're still testing things. Later, use your own
-domain name.
 
 This creates a certificate and a private key, both of them unencrypted, using
 eliptic curves of a particular kind, valid for five years.
 
-You should have three files, now: F<lupa-pona>, F<cert.pem>, and
-F<key.pem>. That's enough to get started! Start the server:
+Start the server:
 
-    perl lupa-pona
+    lupa-pona
 
 This starts the server in the foreground, for C<gemini://localhost:1965>. If it
 aborts, see the L</Troubleshooting> section below. If it runs, open your
@@ -89,60 +80,29 @@ Success!! 😀 🚀🚀
 
 =head2 Troubleshooting
 
-🔥 B<Cannot connect to SSL port 1965 on 127.0.0.1 [No such file or directory]>
-🔥 Perhaps your L<Net::Server::Proto::SSL> module is too old?
-
-🔥 B<SSL_cert_file cert.pem can't be used: No such file or directory>
-🔥 Perhaps you're missing the certificate (F<cert.pem>) or key file
-(F<key.pem>). I<Generate your own> using the Makefile: C<make cert>
-should do it.
+No trouble, yet!
 
 =head2 Options
 
-Lupa Pona uses L<Net::Server> in the background, which has a ton
-options. Let's try to focus on the options you might want to use right
-away.
-
-Here's the documentation for the most useful options:
+These are the options Lupa Pona knows about:
 
 =over
-
-=item C<--host> is the hostname to serve; the default is C<localhost> – you
-      probably want to pick the name of your machine, if it is reachable from
-      the Internet
 
 =item C<--port> is the port to use; the default is 1965
 
-=item C<--log_level> is the log level to use, 0 is quiet, 1 is errors, 2 is
-      warnings, 3 is info, and 4 is debug; the default is 2
+=item C<--log_level> is the log level to use (error, warn, info, debug, trace);
+the default is C<warn>
 
-=back
+=item C<--cert_file> is the certificate file to use; the default is C<cert.pem>
 
-=head2 Running Lupa Pona as a Daemon
-
-If you want to start Lupa Pona as a daemon, the following options come
-in handy:
-
-=over
-
-=item C<--setsid> makes sure Lupa Pona runs as a daemon in the background
-
-=item C<--pid_file> is the file where the process id (pid) gets written once the
-      server starts up; this is useful if you run the server in the background
-      and you need to kill it
-
-=item C<--log_file> is the file to write logs into; the default is to write log
-      output to the standard error (stderr)
-
-=item C<--user> and C<--group> might come in handy if you start Lupa Pona
-      using a different user
+=item C<--key_file> is the key file to use; the default is C<key.pem>
 
 =back
 
 =head2 Using systemd
 
-In this case, we don't want to daemonize the process. Systemd is going to handle
-that for us. There's more documentation L<available
+Systemd is going to handle daemonisation for us. There's more documentation
+L<available
 online|https://www.freedesktop.org/software/systemd/man/systemd.service.html>.
 
 You could create a specific user:
@@ -197,9 +157,9 @@ L<GDPR|https://en.wikipedia.org/wiki/General_Data_Protection_Regulation>.
 
 =cut
 
+use Mojo::Log;
 use Mojo::IOLoop;
 use Getopt::Long;
-use Mojo::Log;
 use File::Slurper qw(read_binary read_dir);
 use Encode qw(encode_utf8 decode_utf8);
 use Modern::Perl '2018';
@@ -216,8 +176,7 @@ my %args = ();
 GetOptions ("port=i"          => \$port,
 	    "cert_file=s"     => \$cert_file,
 	    "key_file=s"      => \$key_file,
-	    "log_level=s"     => \$log_level,
-	    "help")
+	    "log_level=s"     => \$log_level)
     or die("Error in command line arguments\n");
 
 my $log = Mojo::Log->new;
