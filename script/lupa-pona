@@ -197,92 +197,109 @@ L<GDPR|https://en.wikipedia.org/wiki/General_Data_Protection_Regulation>.
 
 =cut
 
-package App::LupaPona;
-use base qw(Net::Server::Fork); # any personality will do
-use File::Slurper qw(read_text read_dir);
+use Mojo::IOLoop;
+use Getopt::Long;
+use Mojo::Log;
+use File::Slurper qw(read_binary read_dir);
 use Encode qw(encode_utf8 decode_utf8);
 use Modern::Perl '2018';
-use IO::Socket::SSL;
 use URI::Escape;
 use Pod::Text;
 use utf8;
 
-App::LupaPona->run(
-  proto => 'ssl',
-  SSL_cert_file => 'cert.pem',
-  SSL_key_file => 'key.pem',
-);
+our $port ||= 1965;
+our $cert_file ||= "cert.pem";
+our $key_file ||= "key.pem";
+our $log_level ||= "warn";  # error, warn, info, debug, trace
 
-sub default_values {
-  return {
-    host => 'localhost',
-    ipv => '*',
-    port => 1965,
+my %args = ();
+GetOptions ("port=i"          => \$port,
+	    "cert_file=s"     => \$cert_file,
+	    "key_file=s"      => \$key_file,
+	    "log_level=s"     => \$log_level,
+	    "help")
+    or die("Error in command line arguments\n");
+
+my $log = Mojo::Log->new;
+$log->level($log_level);
+
+if (not -f $key_file or not -f $cert_file) {
+  say "The certificate and/or key files are missing.";
+  say "Do you want to create them right now?";
+  say "The certificate uses eliptic curves and is valid for five years.";
+  say "If so, please provide your hostname (e.g. localhost).";
+  say "If not, just press Enter.";
+  local $SIG{'ALRM'} = sub {
+    die "Timed out!\n";
   };
+  alarm(30); # timeout for the following prompt
+  my $hostname = <STDIN>;
+  alarm(0);  # done, no more alarm
+  chomp $hostname;
+  die "The hostname may not contain any whitespace\n" if $hostname =~ /\s/;
+  my $cmd = qq(openssl req -new -x509 -newkey ec -subj "/CN=$hostname" )
+      . qq(-pkeyopt ec_paramgen_curve:prime256v1 -days 1825 -nodes -out cert.pem -keyout key.pem);
+  if ($hostname) {
+    say "$cmd ";
+    system($cmd) == 0
+      or die "openssl failed: $?";
+  }
 }
 
-sub post_configure_hook {
-  my $self = shift;
-  $self->log(3, "PID $$");
-  $self->log(3, "Port @{$self->{server}->{port}}");
-  $self->log(3, "Host " . ("@{$self->{server}->{host}}" || "*"));
-}
+Mojo::IOLoop->server(
+  {
+    port => $port,
+    tls => 1,
+    tls_cert => $cert_file,
+    tls_key => $key_file,
+  } => sub {
+    my ($loop, $stream) = @_;
+    $stream->on(read => \&serve_gemini);
+  });
 
-sub process_request {
-  my $self = shift;
-  eval {
-    my $url; # declare here so we can print it on a timeout
-    local $SIG{'ALRM'} = sub {
-      if ($url) {
-	$self->log(1, "Timeout processing $url");
-      } else {
-	$self->log(1, "Timeout");
-      }
-      die "Timed Out!\n";
-    };
-    alarm(10); # timeout
-    $url = <STDIN>; # no loop
-    return unless $url =~ s/\r\n$//; # CR LF is mandatory
-    my ($scheme, $authority, $path, $query, $fragment) =
-	$url =~ m|(?:([^:/?#]+):)?(?://([^/?#]*))?([^?#]*)(?:\?([^#]*))?(?:#(.*))?|;
-    my ($host, $port) = split(/:/, $authority);
-    $port ||= 1965;
-    $self->log(3, "Looking at $url");
-    if (not $url) {
-      $self->log(4, "The URL is empty");
-      say "59 URL expected\r";
-    } elsif (length($url) > 1024) {
-      $self->log(4, "The URL is too long");
-      say "59 The URL is too long\r";
-    } elsif (not $path) {
-      say "31 $url/\r" ; # enforce trailing slash
-    } elsif (grep { $host eq $_ } @{$self->{server}->{host}}
-	     and grep { $port eq $_ } @{$self->{server}->{port}}) {
-      if ($path eq "/") {
-	say "20 text/gemini; charset=UTF-8\r";
-	say "Welcome to Lupa Pona!";
-	for (read_dir(".")) {
-	  say "=> $_" if -f;
-	}
-      } elsif ($path =~ m!^/([^/]+)$!) {
-	my $file = decode_utf8(uri_unescape($1));
-	if (-f $file) {
-	  say "20 text/gemini; charset=UTF-8\r";
-	  print read_text($file);
-	} else {
-	  say "51 File not found: $file\r";
-	}
-      } else {
-	say "51 Path not found for $url\r";
-      }
-    } elsif ($authority) {
-      $self->log(3, "Unsupported proxy request for $url");
-      say "53 Unsupported proxy request for $url\r";
-    } else {
-      $self->log(3, "No handler for $url");
-      say "59 Don't know how to handle $url\r";
+sub serve_gemini {
+  my ($stream, $url) = @_;
+  return unless $url =~ s/\r\n.*//s; # needs URL and CR LF in one chunk
+  my ($scheme, $authority, $path, $query, $fragment) =
+      $url =~ m|(?:([^:/?#]+):)?(?://([^/?#]*))?([^?#]*)(?:\?([^#]*))?(?:#(.*))?|;
+  my ($host, $port) = split(/:/, $authority);
+  $port ||= 1965;
+  $log->info("Looking at $url");
+  if (not $url) {
+    $log->debug("The URL is empty");
+    $stream->write("59 URL expected\r\n");
+  } elsif (length($url) > 1024) {
+    $log->debug("The URL is too long");
+    $stream->write("59 The URL is too long\r\n");
+  } elsif (not $path) {
+    $stream->write("31 $url/\r\n"); # enforce trailing slash
+  } elsif ($path eq "/") {
+    $stream->write("20 text/gemini; charset=UTF-8\r\n");
+    $stream->write("Welcome to Lupa Pona!\n");
+    for (read_dir(".")) {
+      next if $_ eq $cert_file;
+      next if $_ eq $key_file;
+      next if /~$/; # Emacs backup files
+      $stream->write("=> $_") if -f;
     }
-    $self->log(4, "Done");
-  };
-  $self->log(1, "Error: $@") if $@;
-}
+  } elsif ($path eq "/$cert_file" or $path eq "/$key_file") {
+    $stream->write("50 Forbidden\n");
+  } elsif ($path =~ m!^/([^/]+)$!) {
+    my $file = decode_utf8(uri_unescape($1));
+    if (-f $file) {
+      $stream->write("20 text/gemini; charset=UTF-8\r\n");
+      $stream->write(read_binary($file));
+    } else {
+      $stream->write("51 File not found: $file\r\n");
+    }
+  } elsif ($authority) {
+    $log->info("Unsupported proxy request for $url");
+    $stream->write("53 Unsupported proxy request for $url\r\n");
+  } else {
+    $log->info("No handler for $url");
+    $stream->write("59 Don't know how to handle $url\r\n");
+  }
+  $stream->close_gracefully();
+};
+
+Mojo::IOLoop->start unless Mojo::IOLoop->is_running;

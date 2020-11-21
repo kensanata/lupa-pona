@@ -1,0 +1,12 @@
+Makefile$
+RELEASE.md
+MANIFEST.SKIP
+target
+test
+blib
+\.git
+.*\.tar\.gz$
+.*\.bak$
+.*\.old$
+.*\.pem$
+~$
