@@ -38,6 +38,8 @@ Perl libraries you need to install if you want to run Lupa Pona:
 
 =item L<Mojo::Log> and L<Mojo::IOLoop>, or C<libmojolicious-perl>
 
+=item L<IO::Socket::SSL>, or C<libio-socket-ssl-perl>
+
 =item L<File::Slurper>, or C<libfile-slurper-perl>
 
 =item L<Modern::Perl>, or C<libmodern-perl-perl>

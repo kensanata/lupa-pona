@@ -26,6 +26,7 @@ using `SimpleHTTPServer`.
 Perl libraries you need to install if you want to run Lupa Pona:
 
 - [Mojo::Log](https://metacpan.org/pod/Mojo%3A%3ALog) and [Mojo::IOLoop](https://metacpan.org/pod/Mojo%3A%3AIOLoop), or `libmojolicious-perl`
+- [IO::Socket::SSL](https://metacpan.org/pod/IO%3A%3ASocket%3A%3ASSL), or `libio-socket-ssl-perl`
 - [File::Slurper](https://metacpan.org/pod/File%3A%3ASlurper), or `libfile-slurper-perl`
 - [Modern::Perl](https://metacpan.org/pod/Modern%3A%3APerl), or `libmodern-perl-perl`
 - [URI::Escape](https://metacpan.org/pod/URI%3A%3AEscape), or `liburi-escape-xs-perl`

@@ -16,6 +16,8 @@ WriteMakefile(
     'warnings' => 0,
     'Mojo::IOLoop' => 0,
     'Mojo::Log' => 0,
+    # this is an optional dependency for Mojo::IOLoop
+    'IO::Socket::SSL' => 0,
     'File::Slurper' => 0,
     'Modern::Perl' => 0,
     'URI::Escape' => 0,
