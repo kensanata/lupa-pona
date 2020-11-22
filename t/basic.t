@@ -19,6 +19,7 @@ use IO::Socket::SSL;
 use Test::More;
 use Config;
 
+my $host = 'localhost';
 my $port = Mojo::IOLoop::Server->generate_port;
 
 my $pid = fork();
@@ -41,25 +42,25 @@ if (!defined $pid) {
 	or die "Cannot invoke openssl to create certificates\n";
     print $version;
     if ($version =~ /^OpenSSL 1\.0\./) {
-      my $cmd = qq(openssl req -new -x509 -newkey rsa -subj /CN=localhost )
+      my $cmd = qq(openssl req -new -x509 -newkey rsa -subj /CN=$host )
 	  . qq( -days 1825 -nodes -out t/cert.pem -keyout t/key.pem);
       system($cmd) == 0 or die "openssl failed to create t/cert.pem and t/key.pem: $?";
     } else {
-      my $cmd = qq(openssl req -new -x509 -newkey ec -subj /CN=localhost )
+      my $cmd = qq(openssl req -new -x509 -newkey ec -subj /CN=$host )
 	  . qq(-pkeyopt ec_paramgen_curve:prime256v1 -days 1825 -nodes -out t/cert.pem -keyout t/key.pem);
       system($cmd) == 0 or die "openssl failed to create t/cert.pem and t/key.pem: $?";
     }
   }
   chdir($data_dir);
   my $perl_path = $Config{perlpath};
-  exec($perl_path, "../blib/script/lupa-pona", "--port=$port", "--log_level=warn")
+  exec($perl_path, "../blib/script/lupa-pona", "--host=$host", "--port=$port", "--log_level=warn")
       or die "Cannot exec: $!";
 }
 
 sub query_gemini {
   my $query = shift;
   my $socket = IO::Socket::SSL->new(
-    PeerHost => "127.0.0.1",
+    PeerHost => $host,
     PeerService => $port,
     SSL_verify_mode => SSL_VERIFY_NONE)
       or die "Cannot construct client socket: $@";
@@ -71,17 +72,20 @@ sub query_gemini {
 say "This is the client waiting for the server to start...";
 sleep 1;
 
-my $page = query_gemini('gemini://localhost/');
+my $page = query_gemini("gemini://$host:$port/");
 like($page, qr"^20 text/gemini; charset=UTF-8\r\n", "Gemini header");
 like($page, qr/Welcome to Lupa Pona!/, "Title");
 like($page, qr/=> basic.t/, "one file shown");
 is(scalar(() = $page =~ m/=>/g), 1, "exactly one link");
 
-$page = query_gemini('gemini://localhost/basic.t');
+$page = query_gemini("gemini://$host:$port/basic.t");
 like($page, qr"^20 text/gemini; charset=UTF-8\r\n", "File header");
 like($page, qr"GNU General Public License", "File content");
 
-$page = query_gemini('gemini://localhost/cert.pem');
+$page = query_gemini("gemini://$host:$port/cert.pem");
 like($page, qr"^50 ", "Do not serve cert.pem");
+
+$page = query_gemini("gemini://127.0.0.1:$port/");
+like($page, qr"^53 ", "Do not proxy");
 
 done_testing();

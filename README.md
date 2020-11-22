@@ -71,6 +71,10 @@ No trouble, yet!
 
 These are the options Lupa Pona knows about:
 
+- `--host` is the address to use; the default is 0.0.0.0, i.e. accepting
+all connections (use this option if your machine is reachable via multiple
+names, e.g. `alexschroeder.ch` and `emacswiki.org` and you just want want to
+serve one of them)
 - `--port` is the port to use; the default is 1965
 - `--log_level` is the log level to use (error, warn, info, debug, trace);
 the default is `warn`
