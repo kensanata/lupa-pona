@@ -30,6 +30,10 @@ using Lupa Pona to temporarily serve a local directory, as one might
 occasionally use a few lines of Python to serve the local directory over the web
 using C<SimpleHTTPServer>.
 
+=head2 Limitations
+
+Currently, all files are served as C<text/gemini; charset=UTF-8>.
+
 =head2 Dependencies
 
 Perl libraries you need to install if you want to run Lupa Pona:

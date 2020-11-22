@@ -14,12 +14,17 @@ using `SimpleHTTPServer`.
 
 **Table of Contents**
 
+- [Limitations](#limitations)
 - [Dependencies](#dependencies)
 - [Quickstart](#quickstart)
 - [Troubleshooting](#troubleshooting)
 - [Options](#options)
 - [Using systemd](#using-systemd)
 - [Privacy](#privacy)
+
+## Limitations
+
+Currently, all files are served as `text/gemini; charset=UTF-8`.
 
 ## Dependencies
 
