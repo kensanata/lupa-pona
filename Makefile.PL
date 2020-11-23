@@ -19,7 +19,7 @@ WriteMakefile(
     # this is an optional dependency for Mojo::IOLoop
     'IO::Socket::SSL' => 0,
     'File::Slurper' => 0,
-    'Modern::Perl' => 0,
+    'Modern::Perl' => 1.20180701, # for '2018'
     'URI::Escape' => 0,
   },
   META_MERGE => {
