@@ -1,6 +1,7 @@
 Makefile$
 RELEASE.md
 MANIFEST.SKIP
+update-readme
 target
 test
 blib
