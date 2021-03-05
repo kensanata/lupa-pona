@@ -8,6 +8,14 @@ Check the copyright year in the `LICENSE`.
 
 Increase the version in `lib/App/lupapona.pm`.
 
+Use n.nn_nn for developer releases:
+
+```
+make distdir
+mv App-lupapona-1.06 App-lupapona-1.06_00
+tar czf App-lupapona-1.06_00.tar.gz App-lupapona-1.06_00
+```
+
 Double check the `MANIFEST`. Did we add new files that should be in
 here?
 
