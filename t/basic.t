@@ -94,7 +94,7 @@ is(scalar(() = $page =~ m/=>/g), 3, "three links");
 $page = query_gemini("gemini://$host:$port/basic.t");
 # the MIME type can be application/x-perl or text/troff, depending on the system
 # the test runs on…
-like($page, qr"^20 (application/x-perl|text/troff; charset=UTF-8)\r\n", "File header");
+like($page, qr"^20 (application/x-perl|text/(troff|gemini); charset=UTF-8)\r\n", "File header");
 like($page, qr"GNU General Public License", "File content");
 
 $page = query_gemini("gemini://$host:$port/test.txt");
