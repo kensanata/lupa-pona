@@ -1,6 +1,6 @@
 package App::lupapona;
 
-our $VERSION = 1.06;
+our $VERSION = 1.07;
 
 =head1 NAME
 
